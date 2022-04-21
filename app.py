@@ -70,6 +70,9 @@ class Card(db.Model):
         self.exp_date = exp_date
         self.id = id
 
+
+
+
 class Transactions(db.Model):
     T_id = db.Column(db.Integer,primary_key = True)
     acc_f = db.Column(db.Integer)
@@ -144,6 +147,131 @@ def cus_login():
             conn.close()
             return render_template('dashboard_temp.html',id = id,name = name[0],accounts = accounts )
 
+@app.route("/login_emp",methods = ['POST', 'GET'])
+def emp_login():
+    if request.method == 'GET':
+        return render_template('employee_login.html')
+    else:
+        id = request.form.get('id')
+        password = request.form.get('password')
+
+        conn = sq.connect('bank.db')
+        cor = conn.cursor()
+        cor.execute("SELECT password FROM employee_login WHERE ID = ?",(id,))
+        password_db = cor.fetchone()
+        conn.commit()
+        conn.close()
+        if(password_db[0] != password):
+            return "wrong password"
+        else:
+            return render_template('emp_dash.html')
+
+
+@app.route("/cash_deposite",methods = ['POST',"GET"])
+def cash_deposite():
+    if(request.method == 'GET'):
+        return render_template("cash_deposite.html")
+    else:
+        account = request.form.get('account')
+        amount = request.form.get('amount')
+        t_id = random.randint(1000000,9999999)
+        #deposite
+        account_f = 0000000
+        date = datetime.now()
+        
+        conn = sq.connect('bank.db')
+        cor = conn.cursor()
+        cor.execute("SELECT acc_no from account where acc_no = (?)",(account,))
+        data = cor.fetchone()
+        if(data == None):
+            return "wrong account number"
+        else:
+            cor.execute("INSERT INTO transactions values (?,?,?,?,?)",(t_id,account_f,account,amount,date))
+            cor.execute("SELECT balance FROM account where acc_no = (?)",(account,))
+            balance = cor.fetchone()
+            
+            cor.execute("UPDATE account set balance = (?) where acc_no = (?)",(balance[0]+int(amount),account))
+        
+        conn.commit()
+        conn.close()
+
+        return render_template('success_cash_deposite.html',tid = t_id)
+    
+@app.route("/send_cash",methods = ["POST"])
+def send_cash():
+    t_id = random.randint(1000000,9999999)
+    acc_t = request.form.get('acc_t')
+    amount = request.form.get('amount')
+    acc_f = request.form.get('acc_f')
+    date = datetime.now()
+    conn = sq.connect('bank.db')
+    cor = conn.cursor()
+    cor.execute("SELECT balance FROM account WHERE acc_no = ?",(acc_f,))
+    balance = cor.fetchone()
+    if(balance[0] > int(amount)):
+        cor.execute("INSERT INTO transactions values (?,?,?,?,?)",(t_id,acc_f,acc_t,amount,date))
+
+        #adding money
+        cor.execute("SELECT balance FROM account WHERE acc_no = ?",(acc_t,))
+        new_bal = cor.fetchone()
+        cor.execute("UPDATE account set balance = (?) where acc_no = (?)",(new_bal[0]+int(amount),acc_t))
+
+
+        #deducting money
+        cor.execute("UPDATE account set balance = (?) where acc_no = (?)",(balance[0]-int(amount),acc_f))
+        conn.commit()
+        conn.close()
+        return render_template("success_send_cash.html",tid=t_id)
+    else:
+        return "not enough balance"
+    
+    
+
+@app.route("/withdraw_cash",methods = ['POST','GET'])
+def withdraw():
+    if(request.method == 'GET'):
+        return render_template("withdraw_cash.html")
+    else:
+        account_f = request.form.get('account')
+        amount = request.form.get('amount')
+        t_id = random.randint(1000000,9999999)
+        #deposite
+        account_t = 0
+        date = datetime.now()
+        
+        conn = sq.connect('bank.db')
+        cor = conn.cursor()
+        cor.execute("SELECT acc_no from account where acc_no = (?)",(account_f,))
+        data = cor.fetchone()
+        if(data == None):
+            return "wrong account number"
+        else:
+            cor.execute("SELECT balance from account where acc_no = (?)",(account_f,))
+            avai_bal = cor.fetchone()
+            if(avai_bal[0] > int(amount)):
+                #transaction
+                cor.execute("INSERT INTO transactions values (?,?,?,?,?)",(t_id,account_f,account_t,amount,date))
+
+                #deduct amount
+                cor.execute("update account set balance = ? where acc_no = ?",(avai_bal[0]-int(amount),account_f))
+                conn.commit()
+                conn.close()
+
+                return render_template('success_withdraw.html',tid = t_id)
+
+            
+            else:
+                conn.commit()
+                conn.close()
+                return "no enough balance"
+      
+            
+            
+            
+        
+        
+
+
 @app.route("/dashboard",methods = ['POST'])
 def dashboard():
     acc_no = request.form.get('acc_no')
@@ -166,8 +294,16 @@ def dashboard():
     conn.commit()
     conn.close()
 
+    # get transactions
+    conn = sq.connect('bank.db')
+    cor = conn.cursor()
+    cor.execute("SELECT * FROM transactions WHERE acc_f = ? or acc_t = ? order by date desc",(acc_no,acc_no))
+    transactions = cor.fetchall()
+    conn.commit()
+    conn.close()
 
-    return render_template('dashboard.html',bal = bal,cards = cards,acc_no = acc_no)
+
+    return render_template('dashboard.html',bal = bal,cards = cards,acc_no = acc_no,transactions = transactions,len = len(transactions))
 if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)

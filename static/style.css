@@ -49,3 +49,9 @@ width: 40%;
     background-color: rgb(73, 73, 73);
     color: aliceblue;
 }
+
+.blocks{
+    height: 5em;
+    width: 10em;
+    background-color: rgba(0, 0, 0, 0.552);
+}

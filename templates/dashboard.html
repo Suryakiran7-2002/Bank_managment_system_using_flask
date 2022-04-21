@@ -30,6 +30,96 @@
             </div>
         </div>
 
+        <hr>
+        <h2 class="font-rr-nav text-center fs-2 py-3">Send Cash</h2>
+
+        
+        <div class=" container-lg px-5 pb-3">
+           
+        <form method = 'POST' action = '/send_cash'>
+
+            <div class="container-lg text-dark font-rr-nav fs-5">
+                <div class="row justify-content-center">
+                    <div class="col-10 col-md-5 mb-3">
+                        <label for="acc_t" class="form-label"> pay to:-</label>
+                        <input type="number" class="form-control" id="acc_t" name="acc_t" placeholder="Account No.">
+                    </div>
+
+                    
+                    <div class="col-10 col-md-5 mb-3">
+                        <label for="acc)_f" class="form-label">From:-</label>
+                        <input type="number" class="form-control" id="acc_f" name="acc_f" value= {{acc_no}} >
+                    </div>
+                    
+
+                    <div class="col-10 col-md-5 mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="amount" name="amount">
+                    </div>
+
+                    
+                    <div class="col-10 col-md-5 mb-3 d-flex justify-content-center">
+                        <button type="submit" class="btn btn-dark">Send</button>
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+            
+          </form>
+        </div>
+            
+        <hr>
+
+
+
     </div>
+
+    <h2 class="font-rr-nav text-center fs-2 py-3">Recent Transactions</h2>
+    <div class="container">
+        <div class="row text-center justify-content-center">
+            <div class="col-2">
+                <p>Transaction Id</p>
+            </div>
+            <div class="col-2">
+                <p>From</p>
+            </div>
+            <div class="col-2">
+                <p>To</p>
+            </div>
+            <div class="col-2">
+                <p>Amount</p>
+            </div>
+            <div class="col-2">
+                <p>Date</p>
+            </div>
+        </div>
+
+        {% for i in range(0,len)%}
+        <div class="row text-center justify-content-center">
+            <div class="col-2">
+                <p>{{transactions[i][0]}}</p>
+            </div>
+            <div class="col-2">
+                <p>{{transactions[i][1]}}</p>
+            </div>
+            <div class="col-2">
+                <p>{{transactions[i][2]}}</p>
+            </div>
+            <div class="col-2">
+                {% if transactions[i][1] == acc_no %}
+                    <p class="text-danger">{{transactions[i][3]}}</p>
+                {% else %}
+                    <p class="text-success">{{transactions[i][3]}}</p>
+                {%endif%}
+            </div>
+            <div class="col-2">
+                <p>{{transactions[i][4]}}</p>
+            </div>
+        </div>
+        {%endfor%}
+    </div>
+    <hr>
     
 {% endblock %}
